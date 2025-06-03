@@ -2,7 +2,6 @@
 
 A Spring Boot + PostgreSQL demo to explore how to prevent concurrent inserts that bypass logical constraints.
 
----
 
 ## 🧠 Problem
 
@@ -14,7 +13,6 @@ In systems where the database must enforce **logical uniqueness** beyond simple 
 
 However, **concurrent inserts** can still **bypass this logic**, unless the transaction isolation level is set appropriately.
 
----
 
 ## 🔥 The Race Condition
 
@@ -33,7 +31,6 @@ This happens under the default isolation level (**Read Committed**) because:
 - Each transaction sees only committed data.
 - The uncommitted insert from the other transaction is invisible.
 
----
 
 ## 🛠 Why BEFORE INSERT Triggers Alone Are Not Enough
 
@@ -42,7 +39,6 @@ Triggers are evaluated in the context of **the current transaction's view of the
 - If two transactions don't see each other's uncommitted inserts, the trigger condition (e.g., `EXISTS`) fails to catch the race.
 - Triggers cannot "see the future" or prevent a race based on invisible actions from other concurrent transactions.
 
----
 
 ## ✅ The Fix: Serializable Isolation
 
@@ -58,7 +54,6 @@ When using **Serializable isolation**, PostgreSQL ensures:
 
 This prevents the race and enforces serial equivalence.
 
----
 
 ## 🧪 What This Project Demonstrates
 
@@ -66,7 +61,6 @@ This prevents the race and enforces serial equivalence.
 - Why PostgreSQL's default isolation level isn't enough.
 - How Isolation.SERIALIZABLE fixes this issue.
 
----
 
 ## 📚 Learn More
 
