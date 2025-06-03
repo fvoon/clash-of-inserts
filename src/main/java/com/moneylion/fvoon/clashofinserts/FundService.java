@@ -2,6 +2,8 @@ package com.moneylion.fvoon.clashofinserts;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
@@ -9,8 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class FundService {
     private final FundOptionRepository fundOptionRepository;
 
-    //    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE, propagation = Propagation.REQUIRES_NEW)
     public FundOption persistFundOption(FundOption fundOption) {
         return fundOptionRepository.saveAndFlush(fundOption);
     }
