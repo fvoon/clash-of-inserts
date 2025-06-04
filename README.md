@@ -2,6 +2,10 @@
 
 A Spring Boot + PostgreSQL demo to explore how to prevent concurrent inserts that bypass logical constraints.
 
+This repository contains two alternative approaches:
+
+- 🔐 [`serializable-isolation`](https://github.com/fvoon/clash-of-inserts/tree/serializable-isolation): Uses `Isolation.SERIALIZABLE` with a `BEFORE INSERT` trigger.
+- 🔁 [`deferrable-trigger`](https://github.com/fvoon/clash-of-inserts/tree/deferrable-trigger): Uses a `DEFERRABLE` `AFTER INSERT` constraint trigger.
 
 ## 🧠 Problem
 
@@ -40,7 +44,9 @@ Triggers are evaluated in the context of **the current transaction's view of the
 - Triggers cannot "see the future" or prevent a race based on invisible actions from other concurrent transactions.
 
 
-## ✅ The Fix: Serializable Isolation
+## 🔄 Two Approaches to Prevent Concurrent Inserts
+
+### 🔐 Approach 1: Serializable Isolation + BEFORE INSERT Trigger
 
 When using **Serializable isolation**, PostgreSQL ensures:
 
@@ -52,15 +58,24 @@ When using **Serializable isolation**, PostgreSQL ensures:
   Hint: The transaction might succeed if retried.
   ```
 - Serializable isolation is optimistic at the database level: PostgreSQL lets transactions proceed and checks for conflicts at commit.
+- ✅ One insert succeeds, one fails
 
 This prevents the race and enforces serial equivalence.
 
+### 🧷 Approach 2: DEFERRABLE Constraint Trigger
+
+- Uses a PostgreSQL `AFTER INSERT CONSTRAINT TRIGGER` marked `DEFERRABLE INITIALLY DEFERRED`
+- Trigger logic raises an exception if a duplicate row exists at commit time
+- If both transactions insert before commit, both fail at the same time
+- No automatic resolution — zero inserts may succeed unless a manual retry is added
+- Only reduces the window of race condition, if concurrent transactions run the trigger function at the same time, will fail to prevent race condition 
 
 ## 🧪 What This Project Demonstrates
 
-- How concurrent inserts bypass trigger-based validations.
-- Why PostgreSQL's default isolation level isn't enough.
-- How `Isolation.SERIALIZABLE` fixes this issue.
+- How concurrent inserts bypass trigger-based validations under `Read Committed`
+- Why PostgreSQL's default isolation level isn't enough
+- How **Serializable isolation** solves the problem via snapshot isolation
+- The edge cases of **DEFERRABLE triggers**, and when they fail both transactions
 
 
 ## 📚 Learn More
