@@ -237,9 +237,10 @@ RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER fund_option_constraint_check_trigger
-    BEFORE INSERT ON fund_option
-    FOR EACH ROW EXECUTE FUNCTION fund_option_constraint_check_function();
+CREATE CONSTRAINT TRIGGER fund_option_constraint_check_trigger
+    AFTER INSERT ON fund_option
+    DEFERRABLE INITIALLY DEFERRED
+    FOR EACH ROW EXECUTE PROCEDURE fund_option_constraint_check_function();
 
 -- ============================
 -- ML_ACTIVE_INVESTMENT DUPLICATE CONSTRAINT
