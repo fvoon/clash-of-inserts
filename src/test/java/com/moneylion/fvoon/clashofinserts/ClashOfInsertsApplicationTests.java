@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -66,6 +67,64 @@ class ClashOfInsertsApplicationTests {
 		assertTrue(inserted.size() <= 1, "trigger was bypassed under concurrency");
 
 		executor.shutdownNow();
+	}
+
+	@Test
+	void performance() throws Exception {
+		int threadCount = 20;
+		int iterationsPerThread = 10;
+
+		ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+		CountDownLatch latch = new CountDownLatch(1);
+		List<Future<Long>> futures = new ArrayList<>();
+
+		for (int i = 0; i < threadCount; i++) {
+			int threadId = i;
+			futures.add(executor.submit(() -> {
+				latch.await();
+				long start = System.nanoTime();
+				for (int j = 0; j < iterationsPerThread; j++) {
+					try {
+						String account = "acct-" + j;
+						String identifier = threadId + "-" + j;
+
+						FundOption fundOption = FundOption.builder()
+								.userId("user-" + threadId)
+								.type(FundOptionTypes.ACH.getValue())
+								.details(FundDetails.builder()
+										.bankRoutingNumber("1111")
+										.bankAccountNumber(account)
+										.build())
+								.identifier(identifier) // so trigger condition behaves differently
+								.isDeleted(false)
+								.isDisabled(false)
+								.build();
+
+						fundService.persistFundOption(fundOption);
+					} catch (Exception e) {
+						// Can optionally check e.toString().contains("duplicate") or log
+						System.out.println("Insert failed for user-" + threadId + ": " + e.getMessage());
+					}
+				}
+				return System.nanoTime() - start;
+			}));
+		}
+
+		long testStart = System.currentTimeMillis();
+		latch.countDown(); // release all threads
+		long totalNanos = 0;
+
+		for (Future<Long> future : futures) {
+			totalNanos += future.get(); // wait for all threads
+		}
+
+		long elapsedMillis = System.currentTimeMillis() - testStart;
+		List<FundOption> all = fundOptionRepository.findAll();
+		System.out.println("Inserted FundOptions: " + all.size());
+		System.out.println("Total time (ms): " + elapsedMillis);
+		System.out.println("Avg time per thread (ms): " + (totalNanos / 1_000_000 / threadCount));
+
+		executor.shutdown();
 	}
 
 }
