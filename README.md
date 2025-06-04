@@ -51,6 +51,7 @@ When using **Serializable isolation**, PostgreSQL ensures:
   Detail: Reason code: Canceled on identification as a pivot, during commit attempt.
   Hint: The transaction might succeed if retried.
   ```
+- Serializable isolation is optimistic at the database level: PostgreSQL lets transactions proceed and checks for conflicts at commit.
 
 This prevents the race and enforces serial equivalence.
 
@@ -59,7 +60,7 @@ This prevents the race and enforces serial equivalence.
 
 - How concurrent inserts bypass trigger-based validations.
 - Why PostgreSQL's default isolation level isn't enough.
-- How Isolation.SERIALIZABLE fixes this issue.
+- How `Isolation.SERIALIZABLE` fixes this issue.
 
 
 ## 📚 Learn More
